@@ -1,0 +1,17 @@
+# Local Docker Compose settings. Copy this file to .env on your own computer before starting.
+MONGO_INITDB_ROOT_USERNAME=vaultadmin
+MONGO_INITDB_ROOT_PASSWORD=replace-with-a-unique-local-password
+MONGO_DATABASE=knowledge_vault
+REDIS_URL=redis://redis:6379
+MINIO_ROOT_USER=vaultminio
+MINIO_ROOT_PASSWORD=replace-with-a-unique-local-password
+MINIO_BUCKET=knowledge-vault
+MINIO_INTERNAL_ENDPOINT=minio
+MINIO_PUBLIC_ENDPOINT=localhost
+MINIO_PUBLIC_PORT=9000
+MINIO_PORT=9000
+MINIO_CONSOLE_PORT=9001
+API_PORT=8787
+WEB_PORT=5173
+IMPORT_DIR=./local-imports
+BACKUP_DIR=./backups

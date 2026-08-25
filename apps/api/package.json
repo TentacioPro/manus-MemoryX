@@ -1,0 +1,28 @@
+{
+  "name": "knowledge-vault-api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "test": "vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@trpc/server": "latest",
+    "busboy": "latest",
+    "bullmq": "latest",
+    "cors": "latest",
+    "express": "latest",
+    "minio": "latest",
+    "mongodb": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/busboy": "latest",
+    "@types/cors": "latest",
+    "@types/express": "latest",
+    "tsx": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

@@ -1,0 +1,63 @@
+# Project TODO
+
+- [x] Define a Windows-first Docker Compose architecture for React, Node.js/tRPC, MongoDB, MinIO, Redis, and a local job worker.
+- [ ] Add persistent Docker volumes and documented start, stop, upgrade, and portable backup/restore procedures.
+- [x] Model knowledge entries, normalized links, tags, source provenance, deterministic message fingerprints, workflow state, attachments, object keys, MIME types, sizes, and checksums in MongoDB.
+- [x] Implement MinIO upload, browser preview/download, attachment browsing, and reference-safe orphan cleanup.
+- [ ] Implement Redis-backed jobs with visible status and actionable failures for parsing, hashing, link normalization, duplicate detection, and optional reachability checks.
+- [x] Implement idempotent WhatsApp chat-export ZIP/TXT imports with message-level provenance and review before archive commitment.
+- [x] Implement official Instagram Download Your Information imports, locally supplied media ingestion, and manual or CSV URL capture without scraping, login automation, private endpoints, or browser bots.
+- [x] Implement YouTube/Google Takeout imports, including private playlists and Watch Later entries when present in local exports, plus manual/CSV URL capture without APIs, scraping, or account automation.
+- [ ] Canonicalize and deduplicate equivalent links and media checksums while retaining every original source reference.
+- [x] Build a simple, elegant Kanban-style homepage with Inbox, Review, Saved, and Archived workflow columns.
+- [x] Add full-text search, filters, duplicate and invalid-link signals, educational-topic tags, attachment metadata, and clear source/capture labels.
+- [ ] Add JSON and CSV metadata exports plus a portable MinIO media-backup workflow.
+- [ ] Add Windows Task Scheduler and Docker-friendly scheduled commands for timestamped metadata and media backups.
+- [ ] Add unit tests and local validation for import parsing, deduplication, safe deletion, and backup commands.
+- [x] Write clear Windows setup documentation including official-export limitations and repeatable import workflows.
+- [x] Add a timestamped project task ledger that records plan items, subtasks, implementation progress, and completion evidence.
+- [x] Add a visible progress view that reads the timestamped task ledger without exposing user-imported content.
+- [x] Make the task ledger append-only and require each record to include state, decision, action, rationale, and verification evidence.
+- [x] Implement mobile-first responsive navigation, Kanban behavior, forms, filters, and attachment views from 320px or less through 4K widths.
+- [x] Verify responsive layouts at sub-320px, 375px, tablet, 1280px, 1920px, and 3840px viewports without clipped controls or unreadable text.
+- [x] Implement MongoDB entry, link, import, and provenance document creation/update flows rather than only collection indexes.
+- [x] Add attachment browse, preview, and download states to the responsive UI.
+- [x] Store link-validation state and show explicit invalid-link indicators in Kanban cards and related archive views.
+- [x] Show duplicate-state indicators consistently for archive entries, including merged states.
+- [x] Add fixture-based tests for duplicate and invalid-link signals.
+- [x] Render educational topics and capture methods clearly in archive cards and import views.
+- [x] Add date-range controls to the archive filter panel and validate date query handling.
+- [x] Preserve invalidLinkCount on merged-entry updates and test repeated invalid-link merges.
+- [x] Add archive-view tests for duplicate and invalid-link indicators and search/filter state.
+- [x] Show capture-method/source metadata in Imports view cards for each local import kind.
+- [x] Add filter-helper tests for text, date-range, and metadata query construction.
+- [x] Render educational topics in Imports view review summaries alongside source and capture metadata.
+- [x] Add archive/import view-level tests for topics, capture labels, duplicate badges, invalid-link badges, and search/date filter state.
+- [x] Add archive view rendering tests for search text and from/to date-filter controls.
+- [ ] Validate backup, export, and restore scripts use only database and storage environment keys defined in the local configuration template.
+- [ ] Run an end-to-end backup and restore validation on the target Windows Docker stack.
+- [x] Add a non-destructive Windows validation command for local API health, metadata export, and portable backup creation.
+- [x] Add tests for orphan-safe attachment deletion and shared-object cleanup.
+- [x] Add an API route and Media view action for user-initiated orphan-safe attachment deletion with clear reference-protection feedback.
+- [x] Add a Media view file-upload action that uses the local attachment endpoint and refreshes attachment metadata after completion.
+- [x] Add a user-driven API/UI action to unlink an attachment from an archive entry before orphan-safe cleanup.
+- [x] Add service and view coverage for attachment reference unlinking and orphan-safe cleanup.
+- [ ] Run the full attachment lifecycle against the target Windows Docker stack, including upload, download, unlink, safe deletion, and object cleanup.
+- [x] Implement import records and import-row lifecycle changes for received, queued, processing, review_required, committed, failed, and cancelled states with warnings, summaries, and provenance.
+- [x] Wire API and worker jobs to mutate import and import-row records during parsing, review, commit, retry, and failure handling.
+- [x] Implement row-level staged, reviewed, committed, rejected, failed, and cancelled states and apply them during local review and commitment.
+- [ ] Add API procedures and parser/worker paths to create import rows, transition them during parsing and retry, and commit approved rows into archive entries with provenance.
+- [ ] Add tests for import states, import-row states, queue retry/failure, and reviewed-row commitment.
+- [x] Add a user-initiated API path to cancel individual import rows during review and persist a cancellation rationale.
+- [ ] Add transition tests for cancelled rows, reviewed-to-committed rows, failed-to-staged retry, and rejected rows.
+- [x] Add a Windows PowerShell command that copies a local export to the intake folder and queues it for review through the local API.
+- [x] Implement an API and persistence path for manual single-URL capture with source labels, topics, tags, and review staging.
+- [x] Add tests for single-URL manual capture, CSV capture, and official Instagram/YouTube export parsing into review-stage rows.
+- [x] Add representative official-format Instagram export fixtures for saved/liked references, local media, and review-row staging.
+- [x] Add representative Google Takeout fixtures for YouTube Watch Later and private playlist references and review-row staging.
+- [ ] Validate the Instagram and YouTube parser lifecycle from import creation through queued parsing and review_required state.
+- [ ] Add service-level tests for manual single-URL capture covering canonical URL persistence, import creation, staged row creation, and review_required state.
+- [ ] Add end-to-end fixture tests that persist Instagram and YouTube parsed candidates into staged importRows and update imports to review_required.
+- [x] Assert persisted Instagram and YouTube review rows retain expected source labels and capture methods.
+- [ ] Run a Docker-backed integration test on Windows covering API import creation, Redis queue dispatch, worker processing, persisted review rows, and review_required state.
+- [ ] Add tests for entry/link/provenance upserts and import-lifecycle transitions.

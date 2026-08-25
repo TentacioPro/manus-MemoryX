@@ -1,42 +1,130 @@
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import {
+  Archive, ArrowUpRight, Check, ChevronDown, ChevronRight, CircleAlert, FileArchive, FileText, FolderInput, Image, Link2, LoaderCircle, Menu, Paperclip, Plus, Search, ShieldCheck, Sparkles, Upload, Video, X,
+} from "lucide-react";
+import React, { FormEvent, useEffect, useMemo, useState } from "react";
+import "./index.css";
 
-function Router() {
-  // make sure to consider if you need authentication for certain routes
-  return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
-  );
+type Workflow = "inbox" | "review" | "saved" | "archived";
+type Entry = { _id: { $oid?: string } | string; text: string; title?: string; note?: string; workflowState: Workflow; platform?: string; tags?: string[]; topics?: string[]; originalTimestamp?: string; duplicateState?: string; linkState?: "valid" | "invalid"; invalidLinkCount?: number; sourceRefs?: Array<{ sourceLabel?: string; sourceKind?: string; captureMethod?: string }>; attachments?: Attachment[] };
+type Attachment = { _id: { $oid?: string } | string; filename: string; mimeType: string; sizeBytes: number; checksumSha256: string };
+type ImportRecord = { _id: { $oid?: string } | string; kind: string; sourceLabel: string; state: string; provenance?: Record<string, unknown>; topics?: string[]; captureMethods?: string[]; warnings?: string[]; summary?: Record<string, number>; createdAt?: string };
+type Job = { _id: { $oid?: string } | string; kind: string; state: string; progress?: number; failure?: string; createdAt?: string };
+type LedgerEvent = { _id: { $oid?: string } | string; taskId: string; timestamp: string; state: string; decision: string; action: string; rationale: string; evidence: string };
+
+const apiOrigin = import.meta.env.VITE_API_ORIGIN ?? "http://localhost:8787";
+const stages: Array<{ id: Workflow; label: string; tone: string }> = [
+  { id: "inbox", label: "Inbox", tone: "slate" }, { id: "review", label: "Review", tone: "amber" }, { id: "saved", label: "Saved", tone: "green" }, { id: "archived", label: "Archived", tone: "violet" },
+];
+const idOf = (value: { _id: { $oid?: string } | string }) => typeof value._id === "string" ? value._id : value._id.$oid ?? "";
+const getAttachmentUrl = (attachment: Attachment) => `${apiOrigin}/api/attachments/${idOf(attachment)}/download`;
+const formatDate = (value?: string) => value ? new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "Undated";
+const formatBytes = (value: number) => value < 1024 * 1024 ? `${Math.max(1, Math.round(value / 1024))} KB` : `${(value / 1024 / 1024).toFixed(1)} MB`;
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${apiOrigin}${path}`, { ...init, headers: { ...(init?.body instanceof FormData ? {} : { "Content-Type": "application/json" }), ...(init?.headers ?? {}) } });
+  if (!response.ok) throw new Error((await response.json().catch(() => ({ error: response.statusText }))).error ?? response.statusText);
+  return response.json() as Promise<T>;
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
+export default function App() {
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [imports, setImports] = useState<ImportRecord[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [ledger, setLedger] = useState<LedgerEvent[]>([]);
+  const [view, setView] = useState<"archive" | "imports" | "media" | "ledger">("archive");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState({ platform: "", source: "", attachmentType: "", state: "", from: "", to: "" });
+  const [captureOpen, setCaptureOpen] = useState(false);
+  const [capture, setCapture] = useState({ url: "", title: "", note: "", tags: "", topics: "", sourceLabel: "Manual capture" });
 
-function App() {
-  return (
-    <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
-  );
+  const load = async () => {
+    setLoading(true); setError("");
+    const query = new URLSearchParams();
+    if (search.trim()) query.set("search", search.trim());
+    Object.entries(filters).forEach(([key, value]) => { if (value) query.set(key, value); });
+    const [entryResult, importResult, jobResult, attachmentResult, ledgerResult] = await Promise.allSettled([
+      request<Entry[]>(`/api/archive/entries?${query}`), request<ImportRecord[]>("/api/imports"), request<Job[]>("/api/jobs"), request<Attachment[]>("/api/attachments"), request<LedgerEvent[]>("/api/ledger"),
+    ]);
+    if (entryResult.status === "fulfilled") setEntries(entryResult.value); else setError("The local API is not available yet. Start the stack, then refresh this workspace.");
+    if (importResult.status === "fulfilled") setImports(importResult.value);
+    if (jobResult.status === "fulfilled") setJobs(jobResult.value);
+    if (attachmentResult.status === "fulfilled") setAttachments(attachmentResult.value);
+    if (ledgerResult.status === "fulfilled") setLedger(ledgerResult.value);
+    setLoading(false);
+  };
+
+  useEffect(() => { void load(); }, []);
+  useEffect(() => { const timer = window.setTimeout(() => void load(), 350); return () => window.clearTimeout(timer); }, [search, filters]);
+  const grouped = useMemo(() => Object.fromEntries(stages.map(stage => [stage.id, entries.filter(entry => entry.workflowState === stage.id)])) as Record<Workflow, Entry[]>, [entries]);
+  const pendingImports = imports.filter(item => ["received", "queued", "processing", "review_required", "failed"].includes(item.state)).length;
+
+  const moveEntry = async (entry: Entry, state: Workflow) => {
+    if (entry.workflowState === state) return;
+    try { await request(`/api/archive/entries/${idOf(entry)}/state`, { method: "PATCH", body: JSON.stringify({ state }) }); setEntries(current => current.map(item => idOf(item) === idOf(entry) ? { ...item, workflowState: state } : item)); setNotice(`Moved to ${stages.find(item => item.id === state)?.label}.`); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : "Could not update workflow state"); }
+  };
+  const submitCapture = async (event: FormEvent) => {
+    event.preventDefault();
+    try {
+      await request("/api/manual-captures", { method: "POST", body: JSON.stringify({ url: capture.url, title: capture.title || undefined, note: capture.note || undefined, tags: capture.tags.split(",").map(item => item.trim()).filter(Boolean), topics: capture.topics.split(",").map(item => item.trim()).filter(Boolean), sourceLabel: capture.sourceLabel || "Manual capture" }) });
+      setCapture({ url: "", title: "", note: "", tags: "", topics: "", sourceLabel: "Manual capture" }); setCaptureOpen(false); setNotice("Manual reference is staged in Review."); void load();
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not stage manual reference"); }
+  };
+  const uploadAttachment = async (file?: File) => {
+    if (!file) return;
+    try { const data = new FormData(); data.append("attachment", file); await request("/api/attachments/upload", { method: "POST", body: data }); setNotice(`${file.name} added to local storage.`); void load(); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : "Could not upload attachment"); }
+  };
+  const deleteAttachment = async (attachment: Attachment) => {
+    if (!window.confirm(`Remove ${attachment.filename}? This works only when no archive entry still references it.`)) return;
+    try { await request(`/api/attachments/${idOf(attachment)}`, { method: "DELETE" }); setNotice(`${attachment.filename} was removed from local storage.`); void load(); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : "This attachment is still referenced or could not be removed"); }
+  };
+  const unlinkAttachment = async (entry: Entry, attachment: Attachment) => {
+    if (!window.confirm(`Unlink ${attachment.filename} from this entry? The original file remains in local storage until removed safely from Media.`)) return;
+    try { await request(`/api/archive/entries/${idOf(entry)}/attachments/${idOf(attachment)}`, { method: "DELETE" }); setNotice(`${attachment.filename} was unlinked. Remove it from Media if it is no longer used.`); void load(); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : "Could not unlink attachment"); }
+  };
+
+  return <div className="vault-app">
+    <aside className={`sidebar ${mobileNavOpen ? "open" : ""}`} aria-label="Primary navigation">
+      <div className="brand"><span className="brand-mark"><Archive size={18} /></span><span>Knowledge<br /><strong>Vault</strong></span></div>
+      <nav>
+        <NavButton icon={<Archive size={18} />} label="Archive" active={view === "archive"} badge={entries.length || undefined} onClick={() => { setView("archive"); setMobileNavOpen(false); }} />
+        <NavButton icon={<FolderInput size={18} />} label="Imports" active={view === "imports"} badge={pendingImports || undefined} onClick={() => { setView("imports"); setMobileNavOpen(false); }} />
+        <NavButton icon={<Paperclip size={18} />} label="Media" active={view === "media"} badge={attachments.length || undefined} onClick={() => { setView("media"); setMobileNavOpen(false); }} />
+        <NavButton icon={<FileText size={18} />} label="Decision log" active={view === "ledger"} onClick={() => { setView("ledger"); setMobileNavOpen(false); }} />
+      </nav>
+      <div className="sidebar-footer"><ShieldCheck size={16} /><span>Local-only mode<br /><small>No platform access</small></span></div>
+    </aside>
+    {mobileNavOpen && <button className="scrim" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)} />}
+    <main className="main-content">
+      <header className="topbar"><div className="topbar-title"><button className="mobile-menu" onClick={() => setMobileNavOpen(true)} aria-label="Open navigation"><Menu size={20} /></button><div><p className="eyebrow">Personal knowledge system</p><h1>{view === "archive" ? "Archive" : view === "imports" ? "Imports & review" : view === "media" ? "Local media" : "Decision ledger"}</h1></div></div><div className="topbar-actions"><button className="icon-button" onClick={() => void load()} aria-label="Refresh data"><LoaderCircle size={18} className={loading ? "spin" : ""} /></button><button className="primary-button" onClick={() => setCaptureOpen(true)}><Plus size={17} /> Capture URL</button></div></header>
+      {error && <div className="banner error"><CircleAlert size={17} /><span>{error}</span><button onClick={() => setError("")} aria-label="Dismiss"><X size={16} /></button></div>}
+      {notice && <div className="banner success"><Check size={17} /><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Dismiss"><X size={16} /></button></div>}
+      {view === "archive" && <ArchiveView entries={entries} grouped={grouped} filters={filters} setFilters={setFilters} search={search} setSearch={setSearch} filtersOpen={filtersOpen} setFiltersOpen={setFiltersOpen} loading={loading} onMove={moveEntry} onUnlinkAttachment={unlinkAttachment} onCapture={() => setCaptureOpen(true)} />}
+      {view === "imports" && <ImportsView imports={imports} jobs={jobs} loading={loading} />}
+      {view === "media" && <MediaView attachments={attachments} loading={loading} onUpload={uploadAttachment} onDelete={deleteAttachment} />}
+      {view === "ledger" && <LedgerView ledger={ledger} loading={loading} />}
+    </main>
+    {captureOpen && <div className="modal-backdrop" role="presentation"><section className="capture-modal" role="dialog" aria-modal="true" aria-labelledby="capture-title"><div className="modal-heading"><div><p className="eyebrow">No login. No scraping.</p><h2 id="capture-title">Capture a reference</h2></div><button className="icon-button" onClick={() => setCaptureOpen(false)} aria-label="Close capture form"><X size={18} /></button></div><form onSubmit={submitCapture}><label>URL<input required type="url" value={capture.url} onChange={event => setCapture({ ...capture, url: event.target.value })} placeholder="https://…" /></label><div className="two-up"><label>Title<input value={capture.title} onChange={event => setCapture({ ...capture, title: event.target.value })} placeholder="Optional label" /></label><label>Source label<input value={capture.sourceLabel} onChange={event => setCapture({ ...capture, sourceLabel: event.target.value })} /></label></div><label>Personal note<textarea value={capture.note} onChange={event => setCapture({ ...capture, note: event.target.value })} placeholder="Why is this useful?" rows={3} /></label><div className="two-up"><label>Tags<input value={capture.tags} onChange={event => setCapture({ ...capture, tags: event.target.value })} placeholder="ai, research" /></label><label>Topics<input value={capture.topics} onChange={event => setCapture({ ...capture, topics: event.target.value })} placeholder="LLMs, learning" /></label></div><div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setCaptureOpen(false)}>Cancel</button><button className="primary-button" type="submit"><Link2 size={17} /> Stage for review</button></div></form></section></div>}
+  </div>;
 }
 
-export default App;
+function NavButton({ icon, label, active, badge, onClick }: { icon: React.ReactNode; label: string; active: boolean; badge?: number; onClick: () => void }) { return <button className={`nav-button ${active ? "active" : ""}`} onClick={onClick}>{icon}<span>{label}</span>{badge ? <small>{badge}</small> : null}</button>; }
+export function ArchiveView({ entries, grouped, filters, setFilters, search, setSearch, filtersOpen, setFiltersOpen, loading, onMove, onUnlinkAttachment, onCapture }: { entries: Entry[]; grouped: Record<Workflow, Entry[]>; filters: Record<string, string>; setFilters: (filters: any) => void; search: string; setSearch: (value: string) => void; filtersOpen: boolean; setFiltersOpen: (value: boolean) => void; loading: boolean; onMove: (entry: Entry, state: Workflow) => void; onUnlinkAttachment: (entry: Entry, attachment: Attachment) => void; onCapture: () => void }) {
+  return <section className="view-stack"><div className="archive-toolbar"><label className="search-box"><Search size={18} /><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search messages, notes, tags, topics…" /></label><button className={`filter-button ${filtersOpen ? "active" : ""}`} onClick={() => setFiltersOpen(!filtersOpen)}><Sparkles size={16} /> Filters <ChevronDown size={15} /></button></div>{filtersOpen && <div className="filter-panel"><Select label="Workflow" value={filters.state} onChange={value => setFilters({ ...filters, state: value })} options={["Inbox", "Review", "Saved", "Archived"]} values={["inbox", "review", "saved", "archived"]} /><Select label="Platform" value={filters.platform} onChange={value => setFilters({ ...filters, platform: value })} options={["WhatsApp", "Instagram", "YouTube", "GitHub", "Web"]} values={["whatsapp", "instagram", "youtube", "github", "web"]} /><Select label="Source" value={filters.source} onChange={value => setFilters({ ...filters, source: value })} options={["WhatsApp export", "Instagram export", "YouTube Takeout", "Manual URL", "CSV"]} values={["whatsapp_export", "instagram_export", "youtube_takeout", "manual_url", "csv"]} /><Select label="Media" value={filters.attachmentType} onChange={value => setFilters({ ...filters, attachmentType: value })} options={["Images", "Video", "Audio", "Documents"]} values={["image", "video", "audio", "application"]} /><label className="select-field"><span>From date</span><input type="date" value={filters.from} onChange={event => setFilters({ ...filters, from: event.target.value })} /></label><label className="select-field"><span>To date</span><input type="date" value={filters.to} onChange={event => setFilters({ ...filters, to: event.target.value })} /></label><button className="clear-filter" onClick={() => setFilters({ platform: "", source: "", attachmentType: "", state: "", from: "", to: "" })}>Clear all</button></div>}<div className="board-meta"><span>{entries.length} knowledge {entries.length === 1 ? "entry" : "entries"}</span><span>Drag-free workflow moves keep the board usable on touch screens.</span></div><div className="kanban-board">{stages.map(stage => <section className={`kanban-column ${stage.tone}`} key={stage.id}><div className="column-header"><div><span className="column-dot" /><h2>{stage.label}</h2></div><span>{grouped[stage.id].length}</span></div><div className="card-stack">{loading ? <CardSkeleton /> : grouped[stage.id].map(entry => <EntryCard key={idOf(entry)} entry={entry} onMove={onMove} onUnlinkAttachment={onUnlinkAttachment} />)}{!loading && !grouped[stage.id].length && <div className="empty-column">{stage.id === "inbox" ? <><p>Nothing new yet.</p><button onClick={onCapture}>Capture a URL</button></> : <p>No entries in {stage.label.toLowerCase()}.</p>}</div>}</div></section>)}</div></section>;
+}
+export function EntryCard({ entry, onMove, onUnlinkAttachment }: { entry: Entry; onMove: (entry: Entry, state: Workflow) => void; onUnlinkAttachment: (entry: Entry, attachment: Attachment) => void }) { const source = entry.sourceRefs?.[0]; const next = stages[(stages.findIndex(item => item.id === entry.workflowState) + 1) % stages.length]; return <article className="entry-card"><div className="entry-topline"><span className="platform-pill">{entry.platform ?? source?.sourceKind?.replace("_", " ") ?? "reference"}</span><div className="signal-row">{entry.duplicateState && entry.duplicateState !== "unique" && <span className="duplicate-pill">{entry.duplicateState.replace("_", " ")}</span>}{entry.linkState === "invalid" && <span className="invalid-pill"><CircleAlert size={12} /> invalid link{entry.invalidLinkCount && entry.invalidLinkCount > 1 ? "s" : ""}</span>}</div></div><h3>{entry.title || entry.text?.split("\n")[0] || "Untitled reference"}</h3>{entry.note && <p className="entry-note">{entry.note}</p>}<div className="entry-data"><span>{formatDate(entry.originalTimestamp)}</span>{source?.sourceLabel && <span>{source.sourceLabel}</span>}{source?.captureMethod && <span>{source.captureMethod.replace("_", " ")}</span>}</div>{entry.attachments?.length ? <div className="attachment-strip">{entry.attachments.slice(0, 3).map(attachment => <span className="attachment-link" key={idOf(attachment)}><a href={getAttachmentUrl(attachment)} target="_blank" rel="noreferrer" title={attachment.filename}>{attachment.mimeType.startsWith("image/") ? <Image size={15} /> : attachment.mimeType.startsWith("video/") ? <Video size={15} /> : <Paperclip size={15} />}</a><button title={`Unlink ${attachment.filename}`} onClick={() => onUnlinkAttachment(entry, attachment)}><X size={11} /></button></span>)}</div> : null}{entry.tags?.length ? <div className="tag-row">{entry.tags.slice(0, 3).map(tag => <span key={tag}>#{tag}</span>)}</div> : null}{entry.topics?.length ? <div className="topic-row">{entry.topics.slice(0, 2).map(topic => <span key={topic}>Topic · {topic}</span>)}</div> : null}<button className="move-button" onClick={() => onMove(entry, next.id)}>Move to {next.label}<ChevronRight size={15} /></button></article>; }
+export function ImportsView({ imports, jobs, loading }: { imports: ImportRecord[]; jobs: Job[]; loading: boolean }) { return <section className="view-stack"><div className="section-intro"><div><p className="eyebrow">Local queue</p><h2>Review before archive commitment.</h2><p>Exports are parsed on this computer. Warnings and duplicates are surfaced before candidates enter the board.</p></div><a className="secondary-button" href="https://help.instagram.com/181231772500920/" target="_blank" rel="noreferrer">Export guidance <ArrowUpRight size={16} /></a></div><div className="import-grid">{loading ? <CardSkeleton /> : imports.length ? imports.map(item => <article className="import-card" key={idOf(item)}><div className="import-title"><span className="import-icon"><FileArchive size={18} /></span><div><h3>{item.sourceLabel}</h3><p>{item.kind.replaceAll("_", " ")} · {formatDate(item.createdAt)}</p></div><span className={`status-chip ${item.state}`}>{item.state.replaceAll("_", " ")}</span></div><div className="import-meta"><span>Source · {item.sourceLabel}</span><span>Capture · {item.captureMethods?.join(", ") || String(item.provenance?.inputMethod ?? (item.kind === "manual" ? "manual URL" : item.kind === "csv" ? "CSV" : "official local export"))}</span></div>{item.topics?.length ? <div className="import-topic-row">{item.topics.map(topic => <span key={topic}>Topic · {topic}</span>)}</div> : null}<div className="import-stats"><span>{item.summary?.parsed ?? 0} parsed</span><span>{item.summary?.staged ?? 0} staged</span><span>{item.warnings?.length ?? 0} warnings</span></div>{item.warnings?.length ? <p className="warning-line"><CircleAlert size={15} /> {item.warnings[0]}</p> : <p className="quiet-line">No remote account access used.</p>}</article>) : <EmptyState title="No imports yet" body="Use the PowerShell queue command for chat and export archives, or capture a URL from the archive view." />}</div><section className="job-panel"><div className="job-heading"><h2>Background jobs</h2><span>{jobs.length} recent</span></div>{jobs.length ? jobs.map(job => <div className="job-row" key={idOf(job)}><span className={`job-dot ${job.state}`} /><div><strong>{job.kind}</strong><small>{job.failure || "Local processing"}</small></div><span>{job.progress ?? 0}%</span></div>) : <p className="quiet-line">No background jobs have been recorded yet.</p>}</section></section>; }
+export function MediaView({ attachments, loading, onUpload, onDelete }: { attachments: Attachment[]; loading: boolean; onUpload: (file?: File) => void; onDelete: (attachment: Attachment) => void }) { return <section className="view-stack"><div className="section-intro"><div><p className="eyebrow">MinIO object storage</p><h2>Files stay local and traceable.</h2><p>Photos, videos, audio, PDFs, EPUBs, and documents store their bytes locally; the archive tracks the checksum, MIME type, source, and references.</p></div><label className="primary-button upload-label"><Upload size={17} /> Upload attachment<input type="file" onChange={event => onUpload(event.target.files?.[0])} /></label></div><div className="media-grid">{loading ? <CardSkeleton /> : attachments.length ? attachments.map(attachment => <article className="media-card" key={idOf(attachment)}><a href={getAttachmentUrl(attachment)} target="_blank" rel="noreferrer" className="media-preview">{attachment.mimeType.startsWith("image/") ? <Image size={28} /> : attachment.mimeType.startsWith("video/") ? <Video size={28} /> : <Paperclip size={28} />}</a><div><h3>{attachment.filename}</h3><p>{attachment.mimeType} · {formatBytes(attachment.sizeBytes)}</p><code>{attachment.checksumSha256.slice(0, 14)}…</code></div><a href={getAttachmentUrl(attachment)} target="_blank" rel="noreferrer" className="download-link">Preview / download <ArrowUpRight size={15} /></a><button className="remove-attachment" onClick={() => onDelete(attachment)}>Remove if unreferenced</button></article>) : <EmptyState title="No local attachments yet" body="Upload a file here or include media in a WhatsApp, Instagram, or YouTube export." />}</div></section>; }
+function LedgerView({ ledger, loading }: { ledger: LedgerEvent[]; loading: boolean }) { return <section className="view-stack"><div className="section-intro"><div><p className="eyebrow">Append-only project record</p><h2>Every decision has context.</h2><p>This view excludes imported personal content and preserves only task state, the action taken, rationale, and verification evidence.</p></div></div><div className="ledger-list">{loading ? <CardSkeleton /> : ledger.length ? ledger.map(event => <article className="ledger-event" key={idOf(event)}><div className="ledger-time"><span className={`ledger-state ${event.state}`}>{event.state}</span><time>{new Date(event.timestamp).toLocaleString()}</time></div><div><p className="ledger-task">{event.taskId}</p><h3>{event.decision}</h3><p>{event.action}</p><details><summary>Why and evidence</summary><p><strong>Rationale:</strong> {event.rationale}</p><p><strong>Evidence:</strong> {event.evidence}</p></details></div></article>) : <EmptyState title="No decision records yet" body="The ledger will appear after the local API starts." />}</div></section>; }
+function Select({ label, value, onChange, options, values }: { label: string; value: string; onChange: (value: string) => void; options: string[]; values: string[] }) { return <label className="select-field"><span>{label}</span><select value={value} onChange={event => onChange(event.target.value)}><option value="">All</option>{options.map((option, index) => <option key={option} value={values[index]}>{option}</option>)}</select></label>; }
+function EmptyState({ title, body }: { title: string; body: string }) { return <div className="empty-state"><Archive size={24} /><h3>{title}</h3><p>{body}</p></div>; }
+function CardSkeleton() { return <div className="skeleton-card"><span /><span /><span /></div>; }

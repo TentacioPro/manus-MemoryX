@@ -1,0 +1,9 @@
+{
+  "name": "knowledge-vault-worker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": { "start": "tsx src/index.ts", "test": "vitest run --config vitest.config.ts" },
+  "dependencies": { "bullmq": "latest", "csv-parse": "latest", "mime-types": "latest", "minio": "latest", "mongodb": "latest", "unzipper": "latest" },
+  "devDependencies": { "@types/mime-types": "latest", "@types/unzipper": "latest", "tsx": "latest", "typescript": "latest", "vitest": "latest" }
+}
