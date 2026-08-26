@@ -35,4 +35,30 @@ describe("manual URL capture", () => {
     expect(rows[0].candidate.source.sourceKind).toBe("manual_url");
     expect(rows[0].candidate.urls).toEqual(["https://youtu.be/exampleVideo?si=tracking"]);
   });
+
+  it("keeps original URL provenance and persists an edited local enrichment draft without replacing user values", async () => {
+    const db = makeDb();
+    await stageManualUrl(db, { url: "https://www.instagram.com/reel/learn-ai/", title: "My edited title", platform: "instagram", contentType: "educational reel", tags: ["edited-tag"], topics: ["My topic"], enrichment: { method: "heuristic", userAction: "edited", suggestions: { title: "Learn Ai", platform: "instagram", contentType: "reel", tags: ["reel", "instagram"], topics: ["instagram"] } } });
+    const imported = db.docs("imports")[0]; const staged = db.docs("importRows")[0];
+    expect(imported.provenance.originalUrl).toBe("https://www.instagram.com/reel/learn-ai/");
+    expect(imported.provenance.enrichment.userAction).toBe("edited");
+    expect(imported.provenance.enrichment.suggestions.title).toBe("Learn Ai");
+    expect(staged.candidate.title).toBe("My edited title");
+    expect(staged.candidate.platform).toBe("instagram");
+    expect(staged.candidate.contentType).toBe("educational reel");
+    expect(staged.candidate.tags).toEqual(["edited-tag"]);
+    expect(staged.candidate.topics).toEqual(["My topic"]);
+  });
+
+  it("records accepted and ignored local suggestions as explicit provenance outcomes", async () => {
+    const acceptedDb = makeDb();
+    await stageManualUrl(acceptedDb, { url: "https://youtube.com/watch?v=local", title: "Suggested Video", tags: ["video"], topics: ["youtube"], enrichment: { method: "heuristic", userAction: "accepted", suggestions: { title: "Suggested Video", platform: "youtube", contentType: "video", tags: ["video"], topics: ["youtube"] } } });
+    expect(acceptedDb.docs("imports")[0].provenance.enrichment.userAction).toBe("accepted");
+    expect(acceptedDb.docs("importRows")[0].candidate.title).toBe("Suggested Video");
+
+    const ignoredDb = makeDb();
+    await stageManualUrl(ignoredDb, { url: "https://example.org/reference", title: "My own label", enrichment: { method: "heuristic", userAction: "ignored", suggestions: { title: "Do not use", platform: "web", contentType: "article" } } });
+    expect(ignoredDb.docs("imports")[0].provenance.enrichment.userAction).toBe("ignored");
+    expect(ignoredDb.docs("importRows")[0].candidate.title).toBe("My own label");
+  });
 });

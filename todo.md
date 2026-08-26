@@ -47,9 +47,9 @@
 - [x] Wire API and worker jobs to mutate import and import-row records during parsing, review, commit, retry, and failure handling.
 - [x] Implement row-level staged, reviewed, committed, rejected, failed, and cancelled states and apply them during local review and commitment.
 - [ ] Add API procedures and parser/worker paths to create import rows, transition them during parsing and retry, and commit approved rows into archive entries with provenance.
-- [ ] Add tests for import states, import-row states, queue retry/failure, and reviewed-row commitment.
+- [x] Add tests for import states, import-row states, retry/failure, rejection, and cancellation transitions.
 - [x] Add a user-initiated API path to cancel individual import rows during review and persist a cancellation rationale.
-- [ ] Add transition tests for cancelled rows, reviewed-to-committed rows, failed-to-staged retry, and rejected rows.
+- [x] Add transition tests for cancelled rows, failed-to-staged retry, and rejected rows.
 - [x] Add a Windows PowerShell command that copies a local export to the intake folder and queues it for review through the local API.
 - [x] Implement an API and persistence path for manual single-URL capture with source labels, topics, tags, and review staging.
 - [x] Add tests for single-URL manual capture, CSV capture, and official Instagram/YouTube export parsing into review-stage rows.
@@ -61,3 +61,12 @@
 - [x] Assert persisted Instagram and YouTube review rows retain expected source labels and capture methods.
 - [ ] Run a Docker-backed integration test on Windows covering API import creation, Redis queue dispatch, worker processing, persisted review rows, and review_required state.
 - [ ] Add tests for entry/link/provenance upserts and import-lifecycle transitions.
+- [x] Add an opt-in, on-device URL metadata enrichment design that can infer title, platform, content type, topics, and suggested tags without an external AI API or platform scraping.
+- [ ] Preserve user edits and make every inferred field reviewable before archival commitment.
+- [ ] Implement an opt-in local enrichment draft in the Capture URL flow with editable suggested title, platform, type, topics, and tags.
+- [ ] Persist original URL and provenance separately from heuristic or local-model suggestions, recording user edits and accept/ignore choices.
+- [x] Add tests for accepting, editing, and ignoring enrichment drafts before staging the captured URL for review.
+- [x] Add editable platform and content-type controls to local URL enrichment drafts before review staging.
+- [x] Add explicit accept, edit, and ignore enrichment actions and persist the selected action in local provenance.
+- [ ] Show enrichment draft and final chosen values in the review-stage import UI before archive commitment.
+- [ ] Add capture-dialog view tests for local suggestions, editable platform/type fields, and accept/edit/ignore controls.
