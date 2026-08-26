@@ -1,4 +1,4 @@
-name: Quality Gate
+name: CI
 
 on:
   push:
@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  test:
     name: Test and type-check local services
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -27,7 +27,7 @@ jobs:
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Validate root application and script contracts
+      - name: Test and type-check root application
         run: |
           pnpm test
           pnpm check
@@ -36,7 +36,7 @@ jobs:
         working-directory: apps/api
         run: npm install --no-audit --no-fund
 
-      - name: Validate API service
+      - name: Test and type-check API
         working-directory: apps/api
         run: |
           npm test -- --reporter=verbose
@@ -46,7 +46,7 @@ jobs:
         working-directory: apps/worker
         run: npm install --no-audit --no-fund
 
-      - name: Validate worker service
+      - name: Test and type-check worker
         working-directory: apps/worker
         run: |
           npm test -- --reporter=verbose
