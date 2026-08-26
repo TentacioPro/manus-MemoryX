@@ -73,5 +73,5 @@
 - [x] Preserve reviewed platform and content-type values when a staged candidate is committed to the archive.
 - [x] Keep the typed tRPC capture and archive contracts aligned with the local enrichment REST flow.
 - [x] Add integration-style Instagram and YouTube tests beginning with import creation and simulating queue handoff through worker processing into review_required staging.
-- [ ] Run the complete automated quality gate and publish the verified source to the user-provided GitHub repository.
+- [x] Run the complete automated quality gate and publish the verified source to the user-provided GitHub repository.
 - [x] Add a GitHub Actions quality gate that runs the root, API, and worker tests and type checks on every push and pull request.
