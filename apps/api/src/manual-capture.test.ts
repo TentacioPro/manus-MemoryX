@@ -48,6 +48,8 @@ describe("manual URL capture", () => {
     expect(staged.candidate.contentType).toBe("educational reel");
     expect(staged.candidate.tags).toEqual(["edited-tag"]);
     expect(staged.candidate.topics).toEqual(["My topic"]);
+    expect(staged.candidate.enrichment.userAction).toBe("edited");
+    expect(staged.candidate.enrichment.suggestions.contentType).toBe("reel");
   });
 
   it("records accepted and ignored local suggestions as explicit provenance outcomes", async () => {

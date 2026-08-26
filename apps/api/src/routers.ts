@@ -13,6 +13,7 @@ import { stageManualUrl } from "./manual-capture.js";
 export type Context = { db: Db };
 const t = initTRPC.context<Context>().create();
 const objectId = z.string().regex(/^[a-f\d]{24}$/i, "Invalid object id");
+const localEnrichment = z.object({ method: z.enum(["heuristic", "local-model"]), userAction: z.enum(["accepted", "edited", "ignored"]), suggestions: z.object({ title: z.string().optional(), platform: z.string().optional(), contentType: z.string().optional(), tags: z.array(z.string()).optional(), topics: z.array(z.string()).optional(), summary: z.string().optional() }), finalFields: z.object({ platform: z.string().optional(), contentType: z.string().optional() }).optional() });
 
 export const appRouter = t.router({
   system: t.router({
@@ -37,7 +38,7 @@ export const appRouter = t.router({
   }),
   entries: t.router({
     createOrMerge: t.procedure.input(z.object({
-      text: z.string().default(""), note: z.string().optional(), title: z.string().optional(), tags: z.array(z.string()).optional(), topics: z.array(z.string()).optional(),
+      text: z.string().default(""), note: z.string().optional(), title: z.string().optional(), platform: z.string().optional(), contentType: z.string().optional(), tags: z.array(z.string()).optional(), topics: z.array(z.string()).optional(),
       workflowState: z.enum(["inbox", "review", "saved", "archived"]).optional(), originalTimestamp: z.date().nullable().optional(), sender: z.string().nullable().optional(), urls: z.array(z.string()).optional(), attachmentIds: z.array(objectId).optional(),
       source: z.object({ sourceKind: z.enum(["whatsapp_export", "instagram_export", "youtube_takeout", "manual_url", "csv"]), sourceId: z.string(), sourceLabel: z.string(), originalUrl: z.string().optional(), originalTimestamp: z.date().nullable().optional(), sender: z.string().nullable().optional(), captureMethod: z.enum(["saved", "liked", "watch_later", "playlist", "manual", "shared"]).optional() }),
     })).mutation(async ({ ctx, input }) => upsertEntry(ctx.db, { ...input, attachmentIds: toObjectIds(input.attachmentIds), source: { ...input.source, importedAt: new Date() } })),
@@ -53,7 +54,7 @@ export const appRouter = t.router({
     cancelRow: t.procedure.input(z.object({ rowId: objectId, reason: z.string().optional() })).mutation(({ ctx, input }) => cancelImportRow(ctx.db, parseImportRowId(input.rowId), input.reason)),
     retryRows: t.procedure.input(z.object({ id: objectId })).mutation(({ ctx, input }) => retryFailedRows(ctx.db, new ObjectId(input.id))),
     commitReviewed: t.procedure.input(z.object({ id: objectId })).mutation(({ ctx, input }) => commitReviewedRows(ctx.db, new ObjectId(input.id))),
-    captureUrl: t.procedure.input(z.object({ url: z.string().min(1), title: z.string().optional(), note: z.string().optional(), tags: z.array(z.string()).optional(), topics: z.array(z.string()).optional(), sourceLabel: z.string().optional() })).mutation(({ ctx, input }) => stageManualUrl(ctx.db, input)),
+    captureUrl: t.procedure.input(z.object({ url: z.string().min(1), title: z.string().optional(), note: z.string().optional(), platform: z.string().optional(), contentType: z.string().optional(), tags: z.array(z.string()).optional(), topics: z.array(z.string()).optional(), sourceLabel: z.string().optional(), enrichment: localEnrichment.optional() })).mutation(({ ctx, input }) => stageManualUrl(ctx.db, input)),
   }),
   jobs: t.router({
     list: t.procedure.query(async ({ ctx }) => ctx.db.collection("jobs").find().sort({ createdAt: -1 }).limit(100).toArray()),

@@ -35,9 +35,9 @@ async function start() {
   });
   app.post("/api/manual-captures", async (req, res, next) => {
     try {
-      const { url, title, note, tags, topics, sourceLabel } = req.body as { url?: string; title?: string; note?: string; tags?: string[]; topics?: string[]; sourceLabel?: string };
+      const { url, title, note, tags, topics, platform, contentType, sourceLabel, enrichment } = req.body as { url?: string; title?: string; note?: string; tags?: string[]; topics?: string[]; platform?: string; contentType?: string; sourceLabel?: string; enrichment?: import("./manual-capture.js").LocalEnrichmentDraft };
       if (!url) return res.status(400).json({ error: "url is required" });
-      return res.status(201).json(await stageManualUrl(db, { url, title, note, tags, topics, sourceLabel }));
+      return res.status(201).json(await stageManualUrl(db, { url, title, note, tags, topics, platform, contentType, sourceLabel, enrichment }));
     } catch (error) { return next(error); }
   });
   app.get("/api/archive/entries", async (req, res, next) => {

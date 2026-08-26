@@ -52,6 +52,19 @@ describe("archive entry signals", () => {
     expect(db.entries[0].invalidLinkCount).toBe(1);
   });
 
+  it("keeps reviewed platform and content-type choices on initial and merged archive entries", async () => {
+    const db = makeDb();
+    const candidate = { text: "Curated learning reel", urls: ["https://www.instagram.com/reel/learn-ai/"], platform: "instagram", contentType: "educational reel", source };
+    await upsertEntry(db, candidate);
+    expect(db.entries[0].platform).toBe("instagram");
+    expect(db.entries[0].contentType).toBe("educational reel");
+
+    await upsertEntry(db, { ...candidate, platform: "curated-video", contentType: "reference clip" });
+    expect(db.entries).toHaveLength(1);
+    expect(db.entries[0].platform).toBe("curated-video");
+    expect(db.entries[0].contentType).toBe("reference clip");
+  });
+
   it("removes both entry and attachment metadata references before orphan cleanup is requested", async () => {
     const entryId = new ObjectId("0000000000000000000000b1"); const attachmentId = new ObjectId("0000000000000000000000b2"); const calls: string[] = [];
     const db = { collection(name: string) { if (name === "entries") return { updateOne: async () => { calls.push("entry"); return { modifiedCount: 1 }; } }; if (name === "attachments") return { updateOne: async () => { calls.push("attachment"); return { modifiedCount: 1 }; } }; throw new Error(`Unexpected collection ${name}`); } } as any;

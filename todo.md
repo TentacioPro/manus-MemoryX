@@ -62,11 +62,13 @@
 - [ ] Run a Docker-backed integration test on Windows covering API import creation, Redis queue dispatch, worker processing, persisted review rows, and review_required state.
 - [ ] Add tests for entry/link/provenance upserts and import-lifecycle transitions.
 - [x] Add an opt-in, on-device URL metadata enrichment design that can infer title, platform, content type, topics, and suggested tags without an external AI API or platform scraping.
-- [ ] Preserve user edits and make every inferred field reviewable before archival commitment.
-- [ ] Implement an opt-in local enrichment draft in the Capture URL flow with editable suggested title, platform, type, topics, and tags.
-- [ ] Persist original URL and provenance separately from heuristic or local-model suggestions, recording user edits and accept/ignore choices.
+- [x] Preserve user edits and make every inferred field reviewable before archival commitment.
+- [x] Implement an opt-in local enrichment draft in the Capture URL flow with editable suggested title, platform, type, topics, and tags.
+- [x] Persist original URL and provenance separately from heuristic or local-model suggestions, recording user edits and accept/ignore choices.
 - [x] Add tests for accepting, editing, and ignoring enrichment drafts before staging the captured URL for review.
 - [x] Add editable platform and content-type controls to local URL enrichment drafts before review staging.
 - [x] Add explicit accept, edit, and ignore enrichment actions and persist the selected action in local provenance.
-- [ ] Show enrichment draft and final chosen values in the review-stage import UI before archive commitment.
-- [ ] Add capture-dialog view tests for local suggestions, editable platform/type fields, and accept/edit/ignore controls.
+- [x] Show enrichment draft and final chosen values in the review-stage import UI before archive commitment.
+- [x] Add capture-dialog view tests for local suggestions, editable platform/type fields, and accept/edit/ignore controls.
+- [x] Preserve reviewed platform and content-type values when a staged candidate is committed to the archive.
+- [x] Keep the typed tRPC capture and archive contracts aligned with the local enrichment REST flow.

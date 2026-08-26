@@ -6,6 +6,8 @@ export type EntryCandidate = {
   text: string;
   note?: string;
   title?: string;
+  platform?: string | null;
+  contentType?: string | null;
   tags?: string[];
   topics?: string[];
   workflowState?: "inbox" | "review" | "saved" | "archived";
@@ -49,6 +51,8 @@ export async function upsertEntry(db: Db, candidate: EntryCandidate) {
   const sourceRef = { ...candidate.source, sourceFingerprint };
   const existing = await db.collection("entries").findOne({ fingerprint });
   if (existing) {
+    const approvedPlatform = candidate.platform?.trim();
+    const approvedContentType = candidate.contentType?.trim();
     await db.collection("entries").updateOne({ _id: existing._id }, {
       $addToSet: {
         sourceRefs: sourceRef,
@@ -58,11 +62,19 @@ export async function upsertEntry(db: Db, candidate: EntryCandidate) {
         tags: { $each: cleanStrings(candidate.tags) },
         topics: { $each: cleanStrings(candidate.topics) },
       },
-      $set: { updatedAt: new Date(), duplicateState: "merged", linkState, invalidLinkCount },
+      $set: {
+        updatedAt: new Date(),
+        duplicateState: "merged",
+        linkState,
+        invalidLinkCount,
+        ...(approvedPlatform ? { platform: approvedPlatform } : {}),
+        ...(approvedContentType ? { contentType: approvedContentType } : {}),
+      },
     });
     return { entryId: existing._id, created: false, fingerprint, links: links.results };
   }
-  const platform = links.results.find(link => link.isValid)?.platform ?? (candidate.source.sourceKind === "whatsapp_export" ? "whatsapp" : "manual");
+  const platform = candidate.platform?.trim() || (links.results.find(link => link.isValid)?.platform ?? (candidate.source.sourceKind === "whatsapp_export" ? "whatsapp" : "manual"));
+  const contentType = candidate.contentType?.trim() || null;
   const result = await db.collection("entries").insertOne({
     fingerprint,
     text: candidate.text,
@@ -75,6 +87,7 @@ export async function upsertEntry(db: Db, candidate: EntryCandidate) {
     linkState,
     invalidLinkCount,
     platform,
+    contentType,
     sourceKinds: [candidate.source.sourceKind],
     sourceRefs: [sourceRef],
     sourceRefFingerprints: [sourceFingerprint],

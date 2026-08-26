@@ -1,7 +1,7 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { ArchiveView, EntryCard, ImportsView, MediaView } from "./App";
+import { ArchiveView, CaptureDialog, EntryCard, ImportsView, MediaView, ReviewRows } from "./App";
 
 describe("archive metadata views", () => {
   it("renders persisted topic, capture, duplicate, and invalid-link signals on an archive card", () => {
@@ -18,6 +18,26 @@ describe("archive metadata views", () => {
     expect(html).toContain("Source · Google Takeout");
     expect(html).toContain("Capture · watch_later");
     expect(html).toContain("Topic · Research");
+  });
+
+  it("renders final review values alongside accepted local suggestions before commitment", () => {
+    const html = renderToStaticMarkup(<ReviewRows rows={[{ _id: "row-1", ordinal: 1, state: "staged", candidate: { title: "My edited AI reel", platform: "instagram", contentType: "educational reel", tags: ["edited-tag"], topics: ["My topic"], urls: ["https://www.instagram.com/reel/learn-ai/"], enrichment: { method: "heuristic", userAction: "edited", suggestions: { title: "Learn Ai", platform: "instagram", contentType: "reel", tags: ["reel"], topics: ["instagram"] } } } }]} />);
+    expect(html).toContain("Final title");
+    expect(html).toContain("My edited AI reel");
+    expect(html).toContain("educational reel");
+    expect(html).toContain("Local suggestion record · edited");
+    expect(html).toContain("Suggested title:");
+    expect(html).toContain("Learn Ai");
+  });
+
+  it("renders editable local suggestion controls in the actual capture dialog", () => {
+    const html = renderToStaticMarkup(<CaptureDialog capture={{ url: "https://youtube.com/watch?v=local", title: "Suggested Video", note: "", tags: "video", topics: "youtube", platform: "youtube", contentType: "video", sourceLabel: "Manual capture", enrichment: { method: "heuristic", userAction: "accepted", suggestions: { title: "Suggested Video", platform: "youtube", contentType: "video", tags: ["video"], topics: ["youtube"] } } }} onCaptureChange={() => undefined} onClose={() => undefined} onSubmit={() => undefined} onSuggest={() => undefined} onAccept={() => undefined} onIgnore={() => undefined} />);
+    expect(html).toContain("Suggest locally");
+    expect(html).toContain("Platform");
+    expect(html).toContain("Content type");
+    expect(html).toContain("Accept suggestions");
+    expect(html).toContain("Ignore suggestions");
+    expect(html).toContain("Stage for review");
   });
 
   it("renders the active search string and date-range controls when filters are open", () => {
