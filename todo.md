@@ -34,7 +34,7 @@
 - [x] Render educational topics in Imports view review summaries alongside source and capture metadata.
 - [x] Add archive/import view-level tests for topics, capture labels, duplicate badges, invalid-link badges, and search/date filter state.
 - [x] Add archive view rendering tests for search text and from/to date-filter controls.
-- [ ] Validate backup, export, and restore scripts use only database and storage environment keys defined in the local configuration template.
+- [x] Validate backup, export, and restore scripts use only database and storage environment keys defined in the local configuration template.
 - [ ] Run an end-to-end backup and restore validation on the target Windows Docker stack.
 - [x] Add a non-destructive Windows validation command for local API health, metadata export, and portable backup creation.
 - [x] Add tests for orphan-safe attachment deletion and shared-object cleanup.
@@ -46,7 +46,7 @@
 - [x] Implement import records and import-row lifecycle changes for received, queued, processing, review_required, committed, failed, and cancelled states with warnings, summaries, and provenance.
 - [x] Wire API and worker jobs to mutate import and import-row records during parsing, review, commit, retry, and failure handling.
 - [x] Implement row-level staged, reviewed, committed, rejected, failed, and cancelled states and apply them during local review and commitment.
-- [ ] Add API procedures and parser/worker paths to create import rows, transition them during parsing and retry, and commit approved rows into archive entries with provenance.
+- [x] Add API procedures and parser/worker paths to create import rows, transition them during parsing and retry, and commit approved rows into archive entries with provenance.
 - [x] Add tests for import states, import-row states, retry/failure, rejection, and cancellation transitions.
 - [x] Add a user-initiated API path to cancel individual import rows during review and persist a cancellation rationale.
 - [x] Add transition tests for cancelled rows, failed-to-staged retry, and rejected rows.
@@ -55,12 +55,12 @@
 - [x] Add tests for single-URL manual capture, CSV capture, and official Instagram/YouTube export parsing into review-stage rows.
 - [x] Add representative official-format Instagram export fixtures for saved/liked references, local media, and review-row staging.
 - [x] Add representative Google Takeout fixtures for YouTube Watch Later and private playlist references and review-row staging.
-- [ ] Validate the Instagram and YouTube parser lifecycle from import creation through queued parsing and review_required state.
-- [ ] Add service-level tests for manual single-URL capture covering canonical URL persistence, import creation, staged row creation, and review_required state.
-- [ ] Add end-to-end fixture tests that persist Instagram and YouTube parsed candidates into staged importRows and update imports to review_required.
+- [x] Validate the Instagram and YouTube parser lifecycle from import creation through queued parsing and review_required state.
+- [x] Add service-level tests for manual single-URL capture covering canonical URL persistence, import creation, staged row creation, and review_required state.
+- [x] Add end-to-end fixture tests that persist Instagram and YouTube parsed candidates into staged importRows and update imports to review_required.
 - [x] Assert persisted Instagram and YouTube review rows retain expected source labels and capture methods.
 - [ ] Run a Docker-backed integration test on Windows covering API import creation, Redis queue dispatch, worker processing, persisted review rows, and review_required state.
-- [ ] Add tests for entry/link/provenance upserts and import-lifecycle transitions.
+- [x] Add tests for entry/link/provenance upserts and import-lifecycle transitions.
 - [x] Add an opt-in, on-device URL metadata enrichment design that can infer title, platform, content type, topics, and suggested tags without an external AI API or platform scraping.
 - [x] Preserve user edits and make every inferred field reviewable before archival commitment.
 - [x] Implement an opt-in local enrichment draft in the Capture URL flow with editable suggested title, platform, type, topics, and tags.
@@ -72,3 +72,6 @@
 - [x] Add capture-dialog view tests for local suggestions, editable platform/type fields, and accept/edit/ignore controls.
 - [x] Preserve reviewed platform and content-type values when a staged candidate is committed to the archive.
 - [x] Keep the typed tRPC capture and archive contracts aligned with the local enrichment REST flow.
+- [x] Add integration-style Instagram and YouTube tests beginning with import creation and simulating queue handoff through worker processing into review_required staging.
+- [ ] Run the complete automated quality gate and publish the verified source to the user-provided GitHub repository.
+- [x] Add a GitHub Actions quality gate that runs the root, API, and worker tests and type checks on every push and pull request.

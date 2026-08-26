@@ -1,0 +1,53 @@
+name: Quality Gate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Test and type-check local services
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate root application and script contracts
+        run: |
+          pnpm test
+          pnpm check
+
+      - name: Install API dependencies
+        working-directory: apps/api
+        run: npm install --no-audit --no-fund
+
+      - name: Validate API service
+        working-directory: apps/api
+        run: |
+          npm test -- --reporter=verbose
+          npx tsc --ignoreConfig --noEmit --target es2022 --module nodenext --moduleResolution nodenext --esModuleInterop --types node src/*.ts
+
+      - name: Install worker dependencies
+        working-directory: apps/worker
+        run: npm install --no-audit --no-fund
+
+      - name: Validate worker service
+        working-directory: apps/worker
+        run: |
+          npm test -- --reporter=verbose
+          npx tsc --ignoreConfig --noEmit --target es2022 --module nodenext --moduleResolution nodenext --esModuleInterop --types node src/*.ts

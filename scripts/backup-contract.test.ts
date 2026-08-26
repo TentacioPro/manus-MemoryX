@@ -31,12 +31,12 @@ describe("portable backup scripts", () => {
     expect(validation).toContain("Optional destructive restore check");
   });
 
-  it("uses only the configured MONGO_DATABASE key for data export, dump, and restore", async () => {
+  it("uses only database and object-storage keys declared in the local configuration template", async () => {
     const [metadata, backup, restore, config] = await Promise.all([script("export-metadata.ps1"), script("backup.ps1"), script("restore-backup.ps1"), readFile(path.join(projectRoot, "ops", "local-config.template"), "utf8")]);
-    expect(config).toContain("MONGO_DATABASE=");
-    [metadata, backup, restore].forEach(contents => {
-      expect(contents).toContain("$MONGO_DATABASE");
-      expect(contents).not.toContain("$MONGO_INITDB_DATABASE");
-    });
+    const declared = ["MONGO_DATABASE", "MONGO_INITDB_ROOT_USERNAME", "MONGO_INITDB_ROOT_PASSWORD", "MINIO_ROOT_USER", "MINIO_ROOT_PASSWORD", "MINIO_BUCKET"];
+    declared.forEach(key => expect(config).toContain(`${key}=`));
+    [metadata, backup, restore].forEach(contents => expect(contents).not.toContain("$MONGO_INITDB_DATABASE"));
+    [metadata, backup, restore].forEach(contents => ["MONGO_DATABASE", "MONGO_INITDB_ROOT_USERNAME", "MONGO_INITDB_ROOT_PASSWORD"].forEach(key => expect(contents).toContain(`$${key}`)));
+    [backup, restore].forEach(contents => ["MINIO_ROOT_USER", "MINIO_ROOT_PASSWORD", "MINIO_BUCKET"].forEach(key => expect(contents).toContain(`$${key}`)));
   });
 });
