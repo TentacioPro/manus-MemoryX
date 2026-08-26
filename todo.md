@@ -77,4 +77,4 @@
 - [x] Add a GitHub Actions quality gate that runs the root, API, and worker tests and type checks on every push and pull request.
 - [x] Document portable Docker Compose startup for Linux, macOS, Windows, and WSL in the root README.
 - [x] Add a primary GitHub Actions CI workflow at .github/workflows/ci.yml for every push and pull request.
-- [ ] Publish the portable-runtime changes through a GitHub branch, pull request, and merge into main.
+- [x] Publish the portable-runtime changes through a GitHub branch, pull request, and merge into main.
