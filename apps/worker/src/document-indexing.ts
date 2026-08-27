@@ -71,6 +71,10 @@ export async function indexLocalAttachment(
     chunkingVersion,
     embeddingModel: input.embeddingModel,
     embeddingDimensions: input.embeddingDimensions,
+    extraction: {
+      markdown: converted.markdown,
+      structure: converted.structure,
+    },
     conversionProcessingSeconds: converted.processingSeconds,
     warnings: converted.warnings,
     chunkCount: chunks.length,

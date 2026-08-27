@@ -87,5 +87,7 @@
 - [x] Add public-capture policy tests, RAG ingestion and retrieval tests, and local-only operational documentation.
 - [ ] Add an Open Notebook–style workspace with notebooks, sources, notes, retrieval results, and citation-ready context controls.
 - [x] Implement Qdrant collection creation, versioning, and active-alias selection with upgrade regression tests.
-- [ ] Implement API and worker document-intelligence jobs that submit local attachments to Docling, persist extraction artifacts and provenance, and handle failures and retries.
-- [ ] Add representative document-intelligence tests for PDF, EPUB, HTML, and an office-document conversion contract.
+- [x] Implement API and worker document-intelligence jobs that submit local attachments to Docling, persist extraction artifacts and provenance, and handle failures and retries.
+- [x] Add representative document-intelligence tests for PDF, EPUB, HTML, and an office-document conversion contract.
+- [x] Persist normalized Docling Markdown and structured conversion output alongside indexed-document provenance.
+- [x] Add regression tests proving indexed attachments retain conversion artifacts as well as chunk and vector provenance.

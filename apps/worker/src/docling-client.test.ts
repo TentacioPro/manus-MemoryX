@@ -46,4 +46,21 @@ describe("local Docling conversion client", () => {
     const client = createDoclingClient({ url: "http://docling:5001", fetch: async () => response(200, { status: "failure", errors: [{ message: "parse failed" }] }) });
     await expect(client.convertInternalObject("http://minio:9000/file.pdf")).rejects.toThrow("Docling reported failure");
   });
+
+  it.each([
+    ["PDF", "research.pdf"],
+    ["EPUB", "book.epub"],
+    ["HTML", "article.html"],
+    ["Office document", "notes.docx"],
+  ])("uses the same internal-only conversion contract for a %s attachment", async (_label, filename) => {
+    const client = createDoclingClient({
+      url: "http://docling:5001",
+      fetch: async (_url, init) => {
+        const payload = JSON.parse(String(init?.body)) as { http_sources: Array<{ url: string }> };
+        expect(payload.http_sources[0].url).toContain(`/attachments/a/${filename}?signature=local`);
+        return response(200, { status: "success", document: { md_content: "# Local source\n\nIndexable text." } });
+      },
+    });
+    await expect(client.convertInternalObject(`http://minio:9000/knowledge-vault/attachments/a/${filename}?signature=local`)).resolves.toMatchObject({ markdown: "# Local source\n\nIndexable text." });
+  });
 });

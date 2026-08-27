@@ -30,4 +30,21 @@ describe("document-index job processor", () => {
     });
     await expect(processor.process(new ObjectId())).rejects.toThrow("Attachment was not found or is not active");
   });
+
+  it("records a failed document state before propagating a local processing error for BullMQ retry", async () => {
+    const attachmentId = new ObjectId("64b64c733333333333333333");
+    const states: unknown[] = [];
+    const processor = createDocumentIndexProcessor({
+      findAttachment: async () => ({ _id: attachmentId, objectKey: "attachments/a/failing.pdf", filename: "failing.pdf", mimeType: "application/pdf", checksumSha256: "c".repeat(64), sizeBytes: 10 }),
+      createInternalSourceUrl: async () => "http://minio:9000/knowledge-vault/attachments/a/failing.pdf?signature=local",
+      ensureActiveCollection: async () => undefined,
+      indexAttachment: async () => { throw new Error("Docling conversion failed"); },
+      setDocumentState: async state => { states.push(state); },
+    });
+    await expect(processor.process(attachmentId)).rejects.toThrow("Docling conversion failed");
+    expect(states).toEqual([
+      { attachmentId, state: "processing" },
+      { attachmentId, state: "failed", failure: "Docling conversion failed" },
+    ]);
+  });
 });

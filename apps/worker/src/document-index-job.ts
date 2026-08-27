@@ -15,11 +15,17 @@ export function createDocumentIndexProcessor(input: {
       const attachment = await input.findAttachment(attachmentId);
       if (!attachment) throw new Error("Attachment was not found or is not active");
       await input.setDocumentState({ attachmentId, state: "processing" });
-      const sourceUrl = await input.createInternalSourceUrl(attachment.objectKey);
-      await input.ensureActiveCollection();
-      const result = await input.indexAttachment({ attachment, sourceUrl });
-      await input.setDocumentState({ attachmentId, state: "indexed", chunkCount: result.chunkCount, embeddingModel: result.embeddingModel });
-      return result;
+      try {
+        const sourceUrl = await input.createInternalSourceUrl(attachment.objectKey);
+        await input.ensureActiveCollection();
+        const result = await input.indexAttachment({ attachment, sourceUrl });
+        await input.setDocumentState({ attachmentId, state: "indexed", chunkCount: result.chunkCount, embeddingModel: result.embeddingModel });
+        return result;
+      } catch (error) {
+        const failure = error instanceof Error ? error.message.slice(0, 2000) : "Unknown local document-index failure";
+        await input.setDocumentState({ attachmentId, state: "failed", failure });
+        throw error;
+      }
     },
   };
 }

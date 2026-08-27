@@ -30,6 +30,10 @@ describe("local document indexing", () => {
 
     expect(result).toMatchObject({ attachmentId: attachmentId.toHexString(), status: "indexed", chunkCount: 2, embeddingModel: "BAAI/bge-m3" });
     expect(documentUpdates).toHaveLength(1);
+    expect((documentUpdates[0] as Array<{ $set?: { extraction?: { markdown?: string; structure?: unknown } } }>)[1].$set?.extraction).toEqual({
+      markdown: "# Introduction\n\nLocal retrieval keeps evidence nearby.\n\n# Findings\n\nHybrid search combines lexical and semantic ranking.",
+      structure: { body: {} },
+    });
     expect(chunkWrites).toHaveLength(2);
     expect(vectorWrites).toHaveLength(1);
     expect((vectorWrites[0] as { chunks: Array<{ sourceAttachmentId: string; text: string }>; vectors: number[][] }).chunks).toEqual([
