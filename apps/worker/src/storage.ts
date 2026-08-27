@@ -34,3 +34,5 @@ export async function saveStream(db: Db, input: { stream: NodeJS.ReadableStream;
 }
 
 export const saveLocalImportArchive = (db: Db, importId: ObjectId, path: string, mimeType: string) => saveStream(db, { stream: createReadStream(path), filename: basename(path), mimeType, importId, kind: "import" });
+
+export const getInternalObjectUrl = (objectKey: string) => minio.presignedGetObject(bucket, objectKey, 10 * 60);

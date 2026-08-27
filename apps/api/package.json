@@ -9,10 +9,11 @@
   },
   "dependencies": {
     "@trpc/server": "latest",
-    "busboy": "latest",
     "bullmq": "latest",
+    "busboy": "latest",
     "cors": "latest",
     "express": "latest",
+    "ioredis": "^6.0.0",
     "minio": "latest",
     "mongodb": "latest",
     "zod": "latest"

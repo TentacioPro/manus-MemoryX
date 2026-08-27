@@ -63,4 +63,20 @@ describe("manual URL capture", () => {
     expect(ignoredDb.docs("imports")[0].provenance.enrichment.userAction).toBe("ignored");
     expect(ignoredDb.docs("importRows")[0].candidate.title).toBe("My own label");
   });
+
+  it("persists a guarded public HTML capture as explicit retrieval provenance before review", async () => {
+    const db = makeDb();
+    await stageManualUrl(db, {
+      url: "https://arxiv.org/abs/2501.17887",
+      title: "Public paper landing page",
+      note: "Extracted public HTML content.",
+      sourceLabel: "Guarded public capture",
+      captureMethod: "public_html",
+      publicCapture: { contentType: "text/html", statusCode: 200, retrievedAt: "2026-08-27T16:10:00.250Z", extractor: "scrapling-parser-only" },
+    });
+    const imported = db.docs("imports")[0]; const staged = db.docs("importRows")[0];
+    expect(imported.provenance.publicCapture).toEqual({ contentType: "text/html", statusCode: 200, retrievedAt: "2026-08-27T16:10:00.250Z", extractor: "scrapling-parser-only" });
+    expect(staged.candidate.source.captureMethod).toBe("public_html");
+    expect(staged.candidate.publicCapture.extractor).toBe("scrapling-parser-only");
+  });
 });
