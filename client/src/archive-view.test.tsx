@@ -1,7 +1,7 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { ArchiveView, CaptureDialog, EntryCard, ImportsView, MediaView, ReviewRows } from "./App";
+import { ArchiveView, CaptureDialog, EntryCard, ImportsView, MediaView, ResearchView, ReviewRows } from "./App";
 
 describe("archive metadata views", () => {
   it("renders persisted topic, capture, duplicate, and invalid-link signals on an archive card", () => {
@@ -31,13 +31,14 @@ describe("archive metadata views", () => {
   });
 
   it("renders editable local suggestion controls in the actual capture dialog", () => {
-    const html = renderToStaticMarkup(<CaptureDialog capture={{ url: "https://youtube.com/watch?v=local", title: "Suggested Video", note: "", tags: "video", topics: "youtube", platform: "youtube", contentType: "video", sourceLabel: "Manual capture", enrichment: { method: "heuristic", userAction: "accepted", suggestions: { title: "Suggested Video", platform: "youtube", contentType: "video", tags: ["video"], topics: ["youtube"] } } }} onCaptureChange={() => undefined} onClose={() => undefined} onSubmit={() => undefined} onSuggest={() => undefined} onAccept={() => undefined} onIgnore={() => undefined} />);
+    const html = renderToStaticMarkup(<CaptureDialog capture={{ url: "https://youtube.com/watch?v=local", title: "Suggested Video", note: "", tags: "video", topics: "youtube", platform: "youtube", contentType: "video", sourceLabel: "Manual capture", enrichment: { method: "heuristic", userAction: "accepted", suggestions: { title: "Suggested Video", platform: "youtube", contentType: "video", tags: ["video"], topics: ["youtube"] } } }} onCaptureChange={() => undefined} onClose={() => undefined} onSubmit={() => undefined} onSuggest={() => undefined} onPublicCapture={() => undefined} onAccept={() => undefined} onIgnore={() => undefined} />);
     expect(html).toContain("Suggest locally");
     expect(html).toContain("Platform");
     expect(html).toContain("Content type");
     expect(html).toContain("Accept suggestions");
     expect(html).toContain("Ignore suggestions");
     expect(html).toContain("Stage for review");
+    expect(html).toContain("Capture permitted public page");
   });
 
   it("renders the active search string and date-range controls when filters are open", () => {
@@ -51,9 +52,23 @@ describe("archive metadata views", () => {
   });
 
   it("renders local attachment upload, preview, and guarded removal actions", () => {
-    const html = renderToStaticMarkup(<MediaView loading={false} onUpload={() => undefined} onDelete={() => undefined} attachments={[{ _id: "attachment-1", filename: "notes.pdf", mimeType: "application/pdf", sizeBytes: 2048, checksumSha256: "abc123abc123abc123" }]} />);
+    const html = renderToStaticMarkup(<MediaView loading={false} onUpload={() => undefined} onDelete={() => undefined} onIndex={() => undefined} attachments={[{ _id: "attachment-1", filename: "notes.pdf", mimeType: "application/pdf", sizeBytes: 2048, checksumSha256: "abc123abc123abc123" }]} />);
     expect(html).toContain("Upload attachment");
     expect(html).toContain("Preview / download");
     expect(html).toContain("Remove if unreferenced");
+    expect(html).toContain("Index for local RAG");
+  });
+
+  it("renders local hybrid retrieval results with source citations and without a generated answer", () => {
+    const html = renderToStaticMarkup(<ResearchView query="hybrid retrieval" setQuery={() => undefined} onSearch={() => undefined} loading={false} error="" results={[{ chunkId: "chunk-1", text: "Hybrid retrieval combines lexical and dense ranking.", retrievalScore: 0.03, rerankScore: 0.97, citation: { sourceAttachmentId: "attachment-1", headingPath: ["Findings"], pageStart: 7, pageEnd: 8 } }]} notebooks={[{ _id: "notebook-1", title: "RAG evaluation", description: "Compare sources." }]} selectedNotebookId="notebook-1" onSelectNotebook={() => undefined} notes={[{ _id: "note-1", text: "The source span is useful.", sourceAttachmentId: "attachment-1" }]} notebookTitle="" setNotebookTitle={() => undefined} onCreateNotebook={() => undefined} noteText="" setNoteText={() => undefined} onAddNote={() => undefined} />);
+    expect(html).toContain("Research workspace");
+    expect(html).toContain("Search local sources");
+    expect(html).toContain("Hybrid retrieval combines lexical and dense ranking.");
+    expect(html).toContain("Findings");
+    expect(html).toContain("Pages 7–8");
+    expect(html).toContain("Retrieval only");
+    expect(html).toContain("RAG evaluation");
+    expect(html).toContain("The source span is useful.");
+    expect(html).toContain("New notebook");
   });
 });

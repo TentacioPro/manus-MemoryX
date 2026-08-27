@@ -78,3 +78,14 @@
 - [x] Document portable Docker Compose startup for Linux, macOS, Windows, and WSL in the root README.
 - [x] Add a primary GitHub Actions CI workflow at .github/workflows/ci.yml for every push and pull request.
 - [x] Publish the portable-runtime changes through a GitHub branch, pull request, and merge into main.
+- [x] Add a local Qdrant vector store with persistent volumes and a versioned retrieval collection.
+- [ ] Add a local Python document-intelligence worker using Docling for PDF, EPUB, office-document, HTML, image, audio, and video text extraction where supported.
+- [x] Implement deterministic structure-aware chunking with stable chunk fingerprints, parent-document linkage, token budgets, and overlap only when needed.
+- [x] Add local embedding and optional reranking adapters without paid APIs, persisting model, chunk, and retrieval provenance.
+- [x] Add hybrid lexical-plus-semantic retrieval with metadata filters, score fusion, citation-ready source spans, and a retrieval-only search interface.
+- [x] Add a guarded Scrapling public-capture profile that permits only ordinary anonymous public HTTP retrieval and rejects login, cookies, stealth, proxies, browser automation, API capture, and anti-bot bypass settings.
+- [x] Add public-capture policy tests, RAG ingestion and retrieval tests, and local-only operational documentation.
+- [ ] Add an Open Notebook–style workspace with notebooks, sources, notes, retrieval results, and citation-ready context controls.
+- [x] Implement Qdrant collection creation, versioning, and active-alias selection with upgrade regression tests.
+- [ ] Implement API and worker document-intelligence jobs that submit local attachments to Docling, persist extraction artifacts and provenance, and handle failures and retries.
+- [ ] Add representative document-intelligence tests for PDF, EPUB, HTML, and an office-document conversion contract.
