@@ -91,3 +91,4 @@
 - [x] Add representative document-intelligence tests for PDF, EPUB, HTML, and an office-document conversion contract.
 - [x] Persist normalized Docling Markdown and structured conversion output alongside indexed-document provenance.
 - [x] Add regression tests proving indexed attachments retain conversion artifacts as well as chunk and vector provenance.
+- [ ] Publish the validated local RAG and guarded public-capture milestone through a GitHub branch, CI-verified pull request, and merge to main.
